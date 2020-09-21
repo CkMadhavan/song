@@ -27,44 +27,44 @@ Yvocab = len(t.word_index) + 1
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-units = 32
+units = 64
 
 inp2 = keras.layers.Input(shape=(Xlen, ))
 enc1 = keras.layers.Embedding(Xvocab , 100,input_length = Xlen)(inp2)
-enc1 = keras.layers.Bidirectional(keras.layers.LSTM(units , return_sequences = True))(enc1)
-enc1 = keras.layers.Dropout(0.4)(enc1)
+enc1 = keras.layers.LSTM(units , return_sequences = True)(enc1)
+enc1 = keras.layers.Dropout(0.75)(enc1)
 enc1 = keras.layers.BatchNormalization()(enc1)
 
 attention = keras.layers.Dense(1, activation='tanh')(enc1)
 attention = keras.layers.Flatten()(attention)
 attention = keras.layers.Activation('softmax')(attention)
-attention = keras.layers.RepeatVector(2*units)(attention)
+attention = keras.layers.RepeatVector(units)(attention)
 attention = keras.layers.Permute([2, 1])(attention)
 
 sent_representation = keras.layers.multiply([enc1, attention])
-sent_representation1 = keras.layers.Lambda(lambda xin: keras.backend.sum(xin, axis=-2), output_shape=(2*units,))(sent_representation)
+sent_representation1 = keras.layers.Lambda(lambda xin: keras.backend.sum(xin, axis=-2), output_shape=(units,))(sent_representation)
 
 inp3 = keras.layers.Input(shape=(Ylen, ))
 enc2 = keras.layers.Embedding(Yvocab , 100, input_length = Ylen)(inp3)
-enc2 = keras.layers.Bidirectional(keras.layers.LSTM(units , return_sequences = True))(enc2)
-enc2 = keras.layers.Dropout(0.4)(enc2)
+enc2 = keras.layers.LSTM(units , return_sequences = True)(enc2)
+enc2 = keras.layers.Dropout(0.75)(enc2)
 enc2 = keras.layers.BatchNormalization()(enc2)
 
 attention = keras.layers.Dense(1, activation='tanh')(enc2)
 attention = keras.layers.Flatten()(attention)
 attention = keras.layers.Activation('softmax')(attention)
-attention = keras.layers.RepeatVector(2*units)(attention)
+attention = keras.layers.RepeatVector(units)(attention)
 attention = keras.layers.Permute([2, 1])(attention)
 
 sent_representation = keras.layers.multiply([enc2, attention])
-sent_representation2 = keras.layers.Lambda(lambda xin: keras.backend.sum(xin, axis=-2), output_shape=(2*units,))(sent_representation)
+sent_representation2 = keras.layers.Lambda(lambda xin: keras.backend.sum(xin, axis=-2), output_shape=(units,))(sent_representation)
 
 decoder = keras.layers.add([sent_representation1,sent_representation2])
 out = keras.layers.Dense(Yvocab , activation='softmax')(decoder)
 
 model = keras.models.Model(inputs = [inp2,inp3] , outputs = out)
 
-model.compile(optimizer = keras.optimizers.Adam(lr = 0.001) , loss = 'categorical_crossentropy' , metrics = ['acc'])
+model.compile(optimizer = keras.optimizers.Adam() , loss = 'categorical_crossentropy' , metrics = ['acc'])
 model.load_weights('lyrics-eng.hdf5')
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
